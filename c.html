@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Tính tiền cược 2 cửa</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --border: #dfe2e8;
+    --text: #1a1d23;
+    --text-dim: #5b6270;
+    --accent: #2d6cdf;
+    --accent-text: #ffffff;
+    --profit: #1a8f5a;
+    --loss: #d23b3b;
+    --input-bg: #ffffff;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  [data-theme="dark"] {
+    --bg: #14161a;
+    --surface: #1d2026;
+    --border: #2c3038;
+    --text: #e8eaed;
+    --text-dim: #9aa0ab;
+    --accent: #5b8def;
+    --accent-text: #0d1117;
+    --profit: #3ddc91;
+    --loss: #ff6b6b;
+    --input-bg: #20232a;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+    min-height: 100vh;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 20px;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-dim);
+    user-select: none;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field:last-child { margin-bottom: 0; }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  input[type="number"] {
+    width: 100%;
+    font-size: 17px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-label {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .result-value {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .result-value.big {
+    font-size: 20px;
+  }
+  .stake-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 6px;
+    padding: 0 6px;
+  }
+  .profit { color: var(--profit); }
+  .loss { color: var(--loss); }
+  .note {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-top: 14px;
+  }
+  .hidden { display: none; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  .badge.profit-bg { background: rgba(61,220,145,0.15); color: var(--profit); }
+  .badge.loss-bg { background: rgba(255,107,107,0.15); color: var(--loss); }
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    padding-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Tối ưu tiền cược 2 cửa</h1>
+    <div class="theme-toggle" id="themeToggle">
+      <span id="themeIcon">&#9728;</span>
+      <span id="themeLabel">Sáng</span>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="row2">
+      <div class="field">
+        <label for="odd1">Tỷ lệ cửa 1</label>
+        <input type="number" id="odd1" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 2.10" value="2.10">
+      </div>
+      <div class="field">
+        <label for="odd2">Tỷ lệ cửa 2</label>
+        <input type="number" id="odd2" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 1.85" value="1.85">
+      </div>
+    </div>
+    <div class="field">
+      <label for="total">Tổng tiền cược (EUR)</label>
+      <input type="number" id="total" inputmode="decimal" step="1" min="0" placeholder="VD: 100" value="100">
+    </div>
+  </div>
+
+  <div class="card" id="resultCard">
+    <span class="badge" id="resultBadge"></span>
+    <div class="result-row">
+      <span class="result-label"><span class="stake-pill">1</span>Đặt vào cửa 1</span>
+      <span class="result-value big" id="stake1">-</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label"><span class="stake-pill">2</span>Đặt vào cửa 2</span>
+      <span class="result-value big" id="stake2">-</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Tiền nhận về (nếu cửa 1 thắng)</span>
+      <span class="result-value" id="payout1">-</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Tiền nhận về (nếu cửa 2 thắng)</span>
+      <span class="result-value" id="payout2">-</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Lãi / Lỗ (cả hai trường hợp)</span>
+      <span class="result-value" id="pl">-</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Biên nhà cái (overround)</span>
+      <span class="result-value" id="margin">-</span>
+    </div>
+  </div>
+
+  <p class="note" id="noteText"></p>
+  <footer>Chia tiền theo tỷ lệ nghịch đảo odd để cân bằng tiền nhận về ở cả hai kết quả — cách chia giúp lỗ ít nhất có thể (hoặc lãi chắc nếu có kèo arbitrage).</footer>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var saved = localStorage.getItem('theme');
+  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var theme = saved || (prefersDark ? 'dark' : 'light');
+  applyTheme(theme);
+
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem('theme', next);
+  });
+
+  function applyTheme(t) {
+    if (t === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      document.getElementById('themeIcon').innerHTML = '&#9789;';
+      document.getElementById('themeLabel').textContent = 'Tối';
+    } else {
+      root.removeAttribute('data-theme');
+      document.getElementById('themeIcon').innerHTML = '&#9728;';
+      document.getElementById('themeLabel').textContent = 'Sáng';
+    }
+  }
+
+  var fmt = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function eur(n) { return fmt.format(n) + ' €'; }
+  function pct(n) { return fmt.format(n * 100) + ' %'; }
+
+  var $odd1 = document.getElementById('odd1');
+  var $odd2 = document.getElementById('odd2');
+  var $total = document.getElementById('total');
+
+  function calc() {
+    var o1 = parseFloat($odd1.value);
+    var o2 = parseFloat($odd2.value);
+    var total = parseFloat($total.value);
+
+    var resultCard = document.getElementById('resultCard');
+    var note = document.getElementById('noteText');
+
+    if (!o1 || !o2 || o1 <= 1 || o2 <= 1 || !total || total <= 0) {
+      resultCard.classList.add('hidden');
+      note.textContent = 'Nhập tỷ lệ hai cửa (lớn hơn 1.00) và tổng tiền cược để xem kết quả chia tiền tối ưu.';
+      return;
+    }
+    resultCard.classList.remove('hidden');
+
+    // Stake split that equalizes payout on both outcomes:
+    // stake1 = total * o2 / (o1+o2), stake2 = total * o1 / (o1+o2)
+    var stake1 = total * o2 / (o1 + o2);
+    var stake2 = total * o1 / (o1 + o2);
+    var payout1 = stake1 * o1;
+    var payout2 = stake2 * o2;
+    var pl = payout1 - total; // equal to payout2 - total
+    var margin = (1 / o1 + 1 / o2) - 1; // >0: biên nhà cái, <0: có arbitrage
+
+    document.getElementById('stake1').textContent = eur(stake1);
+    document.getElementById('stake2').textContent = eur(stake2);
+    document.getElementById('payout1').textContent = eur(payout1);
+    document.getElementById('payout2').textContent = eur(payout2);
+
+    var plEl = document.getElementById('pl');
+    plEl.textContent = (pl >= 0 ? '+' : '') + eur(pl);
+    plEl.className = 'result-value ' + (pl >= 0 ? 'profit' : 'loss');
+
+    document.getElementById('margin').textContent = (margin >= 0 ? '+' : '') + pct(margin);
+
+    var badge = document.getElementById('resultBadge');
+    if (margin < 0) {
+      badge.textContent = 'CÓ ARBITRAGE — LÃI CHẮC';
+      badge.className = 'badge profit-bg';
+      note.textContent = 'Tổng tỷ lệ ngược (1/odd1 + 1/odd2) nhỏ hơn 1, nên với cách chia này, kết quả nào xảy ra cũng nhận về cùng một số tiền và có lãi chắc ' + eur(pl) + '.';
+    } else {
+      badge.textContent = 'LỖ TỐI THIỂU';
+      badge.className = 'badge loss-bg';
+      note.textContent = 'Hai cửa có biên nhà cái ' + pct(margin) + ', nên không thể có lãi chắc. Cách chia này làm lỗ bằng nhau ở cả hai kết quả và là mức lỗ thấp nhất có thể: ' + eur(pl) + ' (' + pct(pl / total) + ' tổng tiền cược).';
+    }
+  }
+
+  [$odd1, $odd2, $total].forEach(function (el) {
+    el.addEventListener('input', calc);
+  });
+
+  calc();
+})();
+</script>
+</body>
+</html>
