@@ -41,7 +41,7 @@
     -webkit-text-size-adjust: 100%;
   }
   .wrap {
-    max-width: 480px;
+    max-width: 1040px;
     margin: 0 auto;
     padding: 16px 16px 40px;
     min-height: 100vh;
@@ -70,6 +70,19 @@
     color: var(--text-dim);
     user-select: none;
   }
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  @media (min-width: 880px) {
+    .cols {
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+  }
+  .col { min-width: 0; }
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -107,6 +120,32 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+  }
+  .row2:not(:last-child) { margin-bottom: 16px; }
+  .seg-toggle {
+    display: flex;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 16px;
+    gap: 4px;
+  }
+  .seg-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .seg-btn.active {
+    background: var(--accent);
+    color: var(--accent-text);
   }
   .result-row {
     display: flex;
@@ -163,6 +202,12 @@
   }
   .badge.profit-bg { background: rgba(61,220,145,0.15); color: var(--profit); }
   .badge.loss-bg { background: rgba(255,107,107,0.15); color: var(--loss); }
+  .badge.warn-bg { background: rgba(91,141,239,0.15); color: var(--accent); }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
   footer {
     text-align: center;
     font-size: 11px;
@@ -181,53 +226,145 @@
     </div>
   </header>
 
-  <div class="card">
-    <div class="row2">
-      <div class="field">
-        <label for="odd1">Tỷ lệ cửa 1</label>
-        <input type="number" id="odd1" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 2.10" value="2.10">
+  <div class="cols">
+    <div class="col">
+      <h2 class="section-title">Chia tối ưu (cân bằng lãi/lỗ 2 kết quả)</h2>
+
+      <div class="card">
+        <div class="row2">
+          <div class="field">
+            <label for="odd1">Tỷ lệ cửa 1</label>
+            <input type="number" id="odd1" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 2.10" value="2.10">
+          </div>
+          <div class="field">
+            <label for="odd2">Tỷ lệ cửa 2</label>
+            <input type="number" id="odd2" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 1.85" value="1.85">
+          </div>
+        </div>
+        <div class="field">
+          <label for="total">Tổng tiền cược (EUR)</label>
+          <input type="number" id="total" inputmode="decimal" step="1" min="0" placeholder="VD: 100" value="100">
+        </div>
       </div>
-      <div class="field">
-        <label for="odd2">Tỷ lệ cửa 2</label>
-        <input type="number" id="odd2" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 1.85" value="1.85">
+
+      <div class="card" id="resultCard">
+        <span class="badge" id="resultBadge"></span>
+        <div class="result-row">
+          <span class="result-label"><span class="stake-pill">1</span>Đặt vào cửa 1</span>
+          <span class="result-value big" id="stake1">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label"><span class="stake-pill">2</span>Đặt vào cửa 2</span>
+          <span class="result-value big" id="stake2">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Tiền nhận về (nếu cửa 1 thắng)</span>
+          <span class="result-value" id="payout1">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Tiền nhận về (nếu cửa 2 thắng)</span>
+          <span class="result-value" id="payout2">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Lãi / Lỗ (cả hai trường hợp)</span>
+          <span class="result-value" id="pl">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Tổng % Lãi/Lỗ</span>
+          <span class="result-value" id="plPct">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Biên nhà cái (overround)</span>
+          <span class="result-value" id="margin">-</span>
+        </div>
       </div>
+
+      <p class="note" id="noteText"></p>
+      <footer>Chia tiền theo tỷ lệ nghịch đảo odd để cân bằng tiền nhận về ở cả hai kết quả — cách chia giúp lỗ ít nhất có thể (hoặc lãi chắc nếu có kèo arbitrage).</footer>
     </div>
-    <div class="field">
-      <label for="total">Tổng tiền cược (EUR)</label>
-      <input type="number" id="total" inputmode="decimal" step="1" min="0" placeholder="VD: 100" value="100">
+
+    <div class="col">
+      <h2 class="section-title">Đặt đều hoặc đặt tự do (so sánh lãi/lỗ)</h2>
+
+      <div class="seg-toggle" id="eModeToggle">
+        <button type="button" class="seg-btn active" data-mode="equal">Đặt đều (50/50)</button>
+        <button type="button" class="seg-btn" data-mode="free">Đặt tự do</button>
+      </div>
+
+      <div class="card">
+        <div class="row2">
+          <div class="field">
+            <label for="eOdd1">Tỷ lệ cửa 1</label>
+            <input type="number" id="eOdd1" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 2.10" value="2.10">
+          </div>
+          <div class="field">
+            <label for="eOdd2">Tỷ lệ cửa 2</label>
+            <input type="number" id="eOdd2" inputmode="decimal" step="0.01" min="1.01" placeholder="VD: 1.85" value="1.85">
+          </div>
+        </div>
+        <div class="field" id="eTotalField">
+          <label for="eTotal">Tổng tiền cược (EUR)</label>
+          <input type="number" id="eTotal" inputmode="decimal" step="1" min="0" placeholder="VD: 100" value="100">
+        </div>
+        <div class="row2 hidden" id="eFreeFields">
+          <div class="field">
+            <label for="eStakeIn1">Số tiền đặt cửa 1 (EUR)</label>
+            <input type="number" id="eStakeIn1" inputmode="decimal" step="1" min="0" placeholder="VD: 60" value="60">
+          </div>
+          <div class="field">
+            <label for="eStakeIn2">Số tiền đặt cửa 2 (EUR)</label>
+            <input type="number" id="eStakeIn2" inputmode="decimal" step="1" min="0" placeholder="VD: 40" value="40">
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="equalResultCard">
+        <span class="badge" id="equalBadge"></span>
+        <div class="result-row">
+          <span class="result-label"><span class="stake-pill">1</span>Đặt vào cửa 1</span>
+          <span class="result-value big" id="eStake1">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label"><span class="stake-pill">2</span>Đặt vào cửa 2</span>
+          <span class="result-value big" id="eStake2">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Nếu cửa 1 thắng — Lãi/Lỗ</span>
+          <span class="result-value" id="ePl1">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Nếu cửa 2 thắng — Lãi/Lỗ</span>
+          <span class="result-value" id="ePl2">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Lãi tối đa</span>
+          <span class="result-value profit" id="eMaxProfit">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Lãi tối thiểu</span>
+          <span class="result-value profit" id="eMinProfit">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Lỗ tối thiểu</span>
+          <span class="result-value loss" id="eMinLoss">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Lỗ tối đa</span>
+          <span class="result-value loss" id="eMaxLoss">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">Lãi/Lỗ kỳ vọng (giả định mỗi cửa 50% khả năng thắng)</span>
+          <span class="result-value" id="eAvgPl">-</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">% Lãi/Lỗ kỳ vọng</span>
+          <span class="result-value" id="eAvgPlPct">-</span>
+        </div>
+      </div>
+
+      <p class="note" id="equalNote"></p>
     </div>
   </div>
-
-  <div class="card" id="resultCard">
-    <span class="badge" id="resultBadge"></span>
-    <div class="result-row">
-      <span class="result-label"><span class="stake-pill">1</span>Đặt vào cửa 1</span>
-      <span class="result-value big" id="stake1">-</span>
-    </div>
-    <div class="result-row">
-      <span class="result-label"><span class="stake-pill">2</span>Đặt vào cửa 2</span>
-      <span class="result-value big" id="stake2">-</span>
-    </div>
-    <div class="result-row">
-      <span class="result-label">Tiền nhận về (nếu cửa 1 thắng)</span>
-      <span class="result-value" id="payout1">-</span>
-    </div>
-    <div class="result-row">
-      <span class="result-label">Tiền nhận về (nếu cửa 2 thắng)</span>
-      <span class="result-value" id="payout2">-</span>
-    </div>
-    <div class="result-row">
-      <span class="result-label">Lãi / Lỗ (cả hai trường hợp)</span>
-      <span class="result-value" id="pl">-</span>
-    </div>
-    <div class="result-row">
-      <span class="result-label">Biên nhà cái (overround)</span>
-      <span class="result-value" id="margin">-</span>
-    </div>
-  </div>
-
-  <p class="note" id="noteText"></p>
-  <footer>Chia tiền theo tỷ lệ nghịch đảo odd để cân bằng tiền nhận về ở cả hai kết quả — cách chia giúp lỗ ít nhất có thể (hoặc lãi chắc nếu có kèo arbitrage).</footer>
 </div>
 
 <script>
@@ -261,6 +398,7 @@
   function eur(n) { return fmt.format(n) + ' €'; }
   function pct(n) { return fmt.format(n * 100) + ' %'; }
 
+  // ---- Bảng 1: chia tối ưu (cân bằng lãi/lỗ) ----
   var $odd1 = document.getElementById('odd1');
   var $odd2 = document.getElementById('odd2');
   var $total = document.getElementById('total');
@@ -298,6 +436,10 @@
     plEl.textContent = (pl >= 0 ? '+' : '') + eur(pl);
     plEl.className = 'result-value ' + (pl >= 0 ? 'profit' : 'loss');
 
+    var plPctEl = document.getElementById('plPct');
+    plPctEl.textContent = (pl >= 0 ? '+' : '') + pct(pl / total);
+    plPctEl.className = 'result-value ' + (pl >= 0 ? 'profit' : 'loss');
+
     document.getElementById('margin').textContent = (margin >= 0 ? '+' : '') + pct(margin);
 
     var badge = document.getElementById('resultBadge');
@@ -316,7 +458,131 @@
     el.addEventListener('input', calc);
   });
 
+  // ---- Bảng 2: đặt đều (50/50) hoặc đặt tự do (tự nhập số tiền từng cửa) ----
+  var $eOdd1 = document.getElementById('eOdd1');
+  var $eOdd2 = document.getElementById('eOdd2');
+  var $eTotal = document.getElementById('eTotal');
+  var $eStakeIn1 = document.getElementById('eStakeIn1');
+  var $eStakeIn2 = document.getElementById('eStakeIn2');
+  var $eTotalField = document.getElementById('eTotalField');
+  var $eFreeFields = document.getElementById('eFreeFields');
+  var eMode = 'equal';
+
+  document.querySelectorAll('#eModeToggle .seg-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      eMode = btn.getAttribute('data-mode');
+      document.querySelectorAll('#eModeToggle .seg-btn').forEach(function (b) {
+        b.classList.toggle('active', b === btn);
+      });
+      if (eMode === 'free') {
+        $eTotalField.classList.add('hidden');
+        $eFreeFields.classList.remove('hidden');
+      } else {
+        $eTotalField.classList.remove('hidden');
+        $eFreeFields.classList.add('hidden');
+      }
+      calcEqual();
+    });
+  });
+
+  function plText(pl) {
+    return (pl >= 0 ? '+' : '') + eur(pl);
+  }
+
+  function calcEqual() {
+    var o1 = parseFloat($eOdd1.value);
+    var o2 = parseFloat($eOdd2.value);
+    var stake1, stake2, total;
+
+    if (eMode === 'free') {
+      stake1 = parseFloat($eStakeIn1.value);
+      stake2 = parseFloat($eStakeIn2.value);
+      if (isNaN(stake1)) stake1 = 0;
+      if (isNaN(stake2)) stake2 = 0;
+      total = stake1 + stake2;
+    } else {
+      total = parseFloat($eTotal.value);
+      stake1 = total / 2;
+      stake2 = total / 2;
+    }
+
+    var resultCard = document.getElementById('equalResultCard');
+    var note = document.getElementById('equalNote');
+    var validOdds = o1 && o2 && o1 > 1 && o2 > 1;
+    var validAmount = total && total > 0 && stake1 >= 0 && stake2 >= 0;
+
+    if (!validOdds || !validAmount) {
+      resultCard.classList.add('hidden');
+      note.textContent = eMode === 'free'
+        ? 'Nhập tỷ lệ hai cửa (lớn hơn 1.00) và số tiền đặt từng cửa để xem lãi/lỗ.'
+        : 'Nhập tỷ lệ hai cửa (lớn hơn 1.00) và tổng tiền cược để xem lãi/lỗ nếu chia tiền đều 50/50.';
+      return;
+    }
+    resultCard.classList.remove('hidden');
+
+    var payout1 = stake1 * o1;
+    var payout2 = stake2 * o2;
+    var pl1 = payout1 - total;
+    var pl2 = payout2 - total;
+
+    document.getElementById('eStake1').textContent = eur(stake1);
+    document.getElementById('eStake2').textContent = eur(stake2);
+
+    var ePl1El = document.getElementById('ePl1');
+    ePl1El.textContent = plText(pl1);
+    ePl1El.className = 'result-value ' + (pl1 >= 0 ? 'profit' : 'loss');
+    var ePl2El = document.getElementById('ePl2');
+    ePl2El.textContent = plText(pl2);
+    ePl2El.className = 'result-value ' + (pl2 >= 0 ? 'profit' : 'loss');
+
+    var avgPl = (pl1 + pl2) / 2;
+    var avgPlEl = document.getElementById('eAvgPl');
+    avgPlEl.textContent = plText(avgPl);
+    avgPlEl.className = 'result-value ' + (avgPl >= 0 ? 'profit' : 'loss');
+
+    var avgPlPctEl = document.getElementById('eAvgPlPct');
+    avgPlPctEl.textContent = (avgPl >= 0 ? '+' : '') + pct(avgPl / total);
+    avgPlPctEl.className = 'result-value ' + (avgPl >= 0 ? 'profit' : 'loss');
+
+    var profits = [pl1, pl2].filter(function (v) { return v >= 0; });
+    var losses = [pl1, pl2].filter(function (v) { return v < 0; });
+
+    var maxProfitEl = document.getElementById('eMaxProfit');
+    var minProfitEl = document.getElementById('eMinProfit');
+    var minLossEl = document.getElementById('eMinLoss');
+    var maxLossEl = document.getElementById('eMaxLoss');
+
+    maxProfitEl.textContent = profits.length ? '+' + eur(Math.max.apply(null, profits)) : 'Không có';
+    minProfitEl.textContent = profits.length ? '+' + eur(Math.min.apply(null, profits)) : 'Không có';
+    minLossEl.textContent = losses.length ? eur(Math.max.apply(null, losses)) : 'Không có';
+    maxLossEl.textContent = losses.length ? eur(Math.min.apply(null, losses)) : 'Không có';
+
+    var modeDesc = eMode === 'free'
+      ? ('với số tiền tự chọn (cửa 1: ' + eur(stake1) + ', cửa 2: ' + eur(stake2) + ')')
+      : 'với cách chia đều 50/50';
+
+    var badge = document.getElementById('equalBadge');
+    if (profits.length === 2) {
+      badge.textContent = 'LÃI Ở CẢ HAI KẾT QUẢ';
+      badge.className = 'badge profit-bg';
+      note.textContent = 'Với ' + modeDesc + ', cả hai kết quả đều có lãi: từ ' + eur(Math.min.apply(null, profits)) + ' đến ' + eur(Math.max.apply(null, profits)) + '.';
+    } else if (losses.length === 2) {
+      badge.textContent = 'LỖ Ở CẢ HAI KẾT QUẢ';
+      badge.className = 'badge loss-bg';
+      note.textContent = 'Với ' + modeDesc + ', cả hai kết quả đều lỗ: từ ' + eur(Math.max.apply(null, losses)) + ' đến ' + eur(Math.min.apply(null, losses)) + '. Chia theo tỷ lệ nghịch đảo odd ở bảng bên sẽ tối ưu hơn.';
+    } else {
+      badge.textContent = 'LÃI HOẶC LỖ TÙY CỬA THẮNG';
+      badge.className = 'badge warn-bg';
+      note.textContent = 'Với ' + modeDesc + ', lãi/lỗ phụ thuộc cửa nào thắng (xem chi tiết từng trường hợp ở trên): lãi tối đa ' + eur(Math.max.apply(null, profits)) + ', lỗ tối đa ' + eur(Math.min.apply(null, losses)) + '.';
+    }
+  }
+
+  [$eOdd1, $eOdd2, $eTotal, $eStakeIn1, $eStakeIn2].forEach(function (el) {
+    el.addEventListener('input', calcEqual);
+  });
+
   calc();
+  calcEqual();
 })();
 </script>
 </body>
